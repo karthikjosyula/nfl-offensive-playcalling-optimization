@@ -86,6 +86,13 @@ class Agent:
 					action_value += (count / total) * (reward + GAMMA * self.values[(tgt_state, best_action)])
 				self.values[(state, action)] = action_value
 
+	def evaluation(self, state):
+		print('=====================================')
+		print('Evaluation')
+		print('=====================================')
+		eval_action = self.select_action(state)
+		print(f'For state: {state}, action is {eval_action}')
+
 
 if __name__ == '__main__':
 	env = NFLPlaycallingEnv()
@@ -97,10 +104,14 @@ if __name__ == '__main__':
 	writer = SummaryWriter(comment="-q-learning")
 
 	iter_no = 0
-	best_reward = 0.0
+	best_reward = -7.0
 	while True:
 		iter_no += 1
+		print('=====================================')
+		print('Exploration')
 		agent.play_n_random_steps(100)
+		print('=====================================')
+		print('Exploitation')
 		agent.value_iteration()
 
 		reward = 0.0
@@ -108,15 +119,28 @@ if __name__ == '__main__':
 			reward += agent.play_episode(test_env)
 		reward /= TEST_EPISODES
 		writer.add_scalar("reward", reward, iter_no)
-		writer.add_scalar("best_reward", best_reward, iter_no)
 
 		if reward > best_reward:
 			print("Best reward updated %.3f -> %.3f" % (best_reward, reward))
+			print('=====================================')
 			best_reward = reward
-		if reward > 0.80:
+			
+		writer.add_scalar("best_reward", best_reward, iter_no)
+		if reward > 3.0:
+			print('=====================================')
 			print("Solved in %d iterations!" % iter_no)
 			break
+
+		if iter_no >= 100:
+			print('=====================================')
+			print("Stopping after 100 iterations!")
+			break
+
 		
 		
 		writer.close()
 		# tensorboard --logdir runs
+
+	agent.evaluation((50,1,15,0,0,0))
+	agent.evaluation((98,3,2,0,0,0))
+	agent.evaluation((30,0,10,0,0,0))
